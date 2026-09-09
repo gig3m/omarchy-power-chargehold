@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.gig3m.chargehold",
+  "name": "Power with Charge Hold",
+  "version": "0.1.0",
+  "author": "gig3m",
+  "description": "Omarchy's power widget plus a charge hold that writes the kernel charge-control attributes directly, and a power-draw sparkline.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Power",
+    "description": "Battery, power profile, system stats, charge hold, and power draw history",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

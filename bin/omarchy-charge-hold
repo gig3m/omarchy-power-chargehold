@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Enable/disable a battery charge hold by writing the kernel's charge-control
+# attributes directly. Deliberately does NOT go through UPower, whose
+# EnableChargeThreshold hardcodes 75/80 - a pair this Dell EC accepts and then
+# silently ignores. 50/90 is verified to hold on this machine.
+set -euo pipefail
+
+BAT=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1)
+[[ -z $BAT ]] && { echo "no battery" >&2; exit 1; }
+
+# Values, in order of precedence: environment, /etc/omarchy-charge-hold.conf,
+# then the defaults. 50/90 is used because UPower's own limiter hardcodes
+# 75/80, which some Dell ECs accept and then silently ignore.
+CONF=/etc/omarchy-charge-hold.conf
+[[ -r $CONF ]] && . "$CONF"
+START=${CHARGE_HOLD_START:-${START:-50}}
+END=${CHARGE_HOLD_END:-${END:-90}}
+
+write() { printf '%s' "$2" > "$BAT/$1"; }
+
+case "${1:-status}" in
+  on)
+    [[ -w $BAT/charge_control_end_threshold ]] || { echo "need root" >&2; exit 1; }
+    write charge_control_start_threshold "$START"
+    write charge_control_end_threshold "$END"
+    [[ -w $BAT/charge_types ]] && write charge_types Custom
+    ;;
+  off)
+    [[ -w $BAT/charge_types ]] || { echo "need root" >&2; exit 1; }
+    write charge_types Standard
+    ;;
+  status) ;;
+  *) echo "usage: $0 {on|off|status}" >&2; exit 2 ;;
+esac
+
+mode=$(sed -n 's/.*\[\(.*\)\].*/\1/p' "$BAT/charge_types" 2>/dev/null)
+s=$(<"$BAT/charge_control_start_threshold") 2>/dev/null || s=""
+e=$(<"$BAT/charge_control_end_threshold") 2>/dev/null || e=""
+printf 'mode\t%s\n' "${mode:-unknown}"
+printf 'start\t%s\n' "${s:-}"
+printf 'end\t%s\n' "${e:-}"
+printf 'active\t%s\n' "$([[ $mode == Custom ]] && echo true || echo false)"
