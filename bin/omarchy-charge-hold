@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Enable/disable a battery charge hold by writing the kernel's charge-control
 # attributes directly. Deliberately does NOT go through UPower, whose
-# EnableChargeThreshold hardcodes 75/80 - a pair this Dell EC accepts and then
-# silently ignores. 50/90 is verified to hold on this machine.
+# EnableChargeThreshold hardcodes 75/80 - a pair some Dell ECs accept and then
+# silently ignore. 50/90 was verified to hold on a Dell XPS 13 9310.
 set -euo pipefail
 
-BAT=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1)
+BAT=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -1 || true)
 [[ -z $BAT ]] && { echo "no battery" >&2; exit 1; }
 
 # Values, in order of precedence: environment, /etc/omarchy-charge-hold.conf,
@@ -15,6 +15,8 @@ CONF=/etc/omarchy-charge-hold.conf
 [[ -r $CONF ]] && . "$CONF"
 START=${CHARGE_HOLD_START:-${START:-50}}
 END=${CHARGE_HOLD_END:-${END:-90}}
+[[ $START =~ ^[0-9]+$ && $END =~ ^[0-9]+$ ]] && (( START < END && END <= 100 )) \
+  || { echo "bad thresholds: START=$START END=$END" >&2; exit 2; }
 
 write() { printf '%s' "$2" > "$BAT/$1"; }
 
