@@ -83,8 +83,9 @@ cycle, so a test that skips step 1 proves nothing.
 
 ## Credit
 
-`Panel.qml` and `Model.js` are forked from Omarchy's `omarchy.power` widget
-(MIT). The drain-sparkline approach follows
+`Panel.qml` and `Model.js` are forked from the `omarchy.power` widget in
+[Omarchy](https://github.com/basecamp/omarchy) (MIT, Copyright (c) David
+Heinemeier Hansson); its notice is carried in `LICENSE`. The drain-sparkline approach follows
 [Better Battery](https://github.com/AROICE-HQ/omarchy-battery) by aryan-techie.
 
 MIT licensed.
