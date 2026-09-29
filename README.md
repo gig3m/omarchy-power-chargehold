@@ -38,13 +38,18 @@ reads sysfs, so the number displayed is the number in effect.
 ## Install
 
 ```bash
+# 1. the widget
 omarchy plugin add https://github.com/gig3m/omarchy-power-chargehold.git --enable
+
+# 2. the root-owned helper it calls
 git clone https://github.com/gig3m/omarchy-power-chargehold.git
 cd omarchy-power-chargehold && ./install.sh
 ```
 
-The second step installs the privileged helper to `/usr/local/bin`, which
-`omarchy plugin add` can't do on its own.
+Step 2 installs `bin/omarchy-charge-hold` to `/usr/local/bin` (owned by root,
+mode 0755), which `omarchy plugin add` can't do on its own. Read it first; it is
+short. Nothing in sysfs is chmod'ed — writes happen only when the helper
+runs as root.
 
 ## Configuration
 
@@ -54,6 +59,9 @@ Defaults to 50/90. Override in `/etc/omarchy-charge-hold.conf`:
 START=60
 END=80
 ```
+
+The helper sources this file as root, so keep it root-owned and not writable
+by anyone else.
 
 Then verify it actually holds — see *Verifying* below, because a threshold your
 firmware accepts is not the same as one it honors.
@@ -79,7 +87,13 @@ cycle, so a test that skips step 1 proves nothing.
 - Omarchy with `omarchy-shell`
 - A laptop exposing `charge_control_*_threshold` in sysfs (kernel 6.12+ for Dell)
 - `sudo` or polkit for the helper — the toggle tries passwordless `sudo -n`
-  first and falls back to `pkexec`
+  first and falls back to a `pkexec` password prompt. To skip the prompt,
+  allow just this helper, not a blanket rule (`sudo visudo -f
+  /etc/sudoers.d/charge-hold`):
+
+  ```
+  %wheel ALL=(root) NOPASSWD: /usr/local/bin/omarchy-charge-hold on, /usr/local/bin/omarchy-charge-hold off
+  ```
 
 ## Credit
 
